@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HOME</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0f1117; --surface: #161b27; --card: #1e2433;
+  --border: #2a3347; --text: #e8eaf0; --muted: #6b7280;
+  --accent: #3b82f6; --accent2: #f59e0b; --green: #10b981;
+  --red: #ef4444; --pink: #ec4899;
+}
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+.header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+.header-title { font-size: 20px; font-weight: 800; letter-spacing: 2px; color: var(--accent); }
+.sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); transition: background 0.3s; }
+.sync-dot.syncing { background: var(--accent2); animation: pulse 1s infinite; }
+@keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
+.nav { background: var(--surface); border-bottom: 1px solid var(--border); display: flex; overflow-x: auto; scrollbar-width: none; }
+.nav::-webkit-scrollbar { display: none; }
+.nav-tab { padding: 13px 16px; border: none; background: transparent; color: var(--muted); font-size: 13px; font-family: inherit; cursor: pointer; white-space: nowrap; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.content { max-width: 900px; margin: 0 auto; padding: 20px 16px 60px; }
+.section { display: none; }
+.section.active { display: block; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin-bottom: 14px; }
+.card-title { font-size: 13px; font-weight: 700; color: var(--muted); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 0.8px; }
+.cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media(max-width:500px){ .cat-grid { grid-template-columns: 1fr; } }
+.cat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+.cat-name { font-size: 16px; font-weight: 700; margin-bottom: 12px; }
+.cat-task { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.cat-task:last-child { border-bottom: none; }
+.cat-task-label { font-size: 14px; }
+.cat-check { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--border); background: transparent; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+.cat-check.done { background: var(--green); border-color: var(--green); }
+.cat-date { font-size: 11px; color: var(--muted); margin-top: 10px; }
+.futter-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.futter-item:last-child { border-bottom: none; }
+.futter-label { min-width: 140px; font-size: 13px; }
+.futter-bar-wrap { flex: 1; background: var(--border); border-radius: 4px; height: 8px; overflow: hidden; }
+.futter-bar { height: 100%; border-radius: 4px; transition: width 0.3s; }
+.futter-pct { font-size: 12px; min-width: 35px; text-align: right; font-weight: 600; }
+.futter-btns { display: flex; gap: 4px; }
+.futter-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; font-size: 14px; cursor: pointer; color: var(--text); font-family: inherit; }
+.shop-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+.shop-tab { padding: 7px 16px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-size: 13px; cursor: pointer; font-family: inherit; }
+.shop-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.add-row { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.add-row input { flex: 1; min-width: 120px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; font-size: 14px; color: var(--text); font-family: inherit; outline: none; }
+.add-row input:focus { border-color: var(--accent); }
+.add-row select { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 9px 10px; font-size: 13px; color: var(--text); font-family: inherit; outline: none; }
+.add-btn { background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 9px 16px; font-size: 18px; cursor: pointer; font-weight: bold; }
+.favorites { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.fav-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 5px 12px; font-size: 12px; cursor: pointer; color: var(--muted); font-family: inherit; }
+.fav-btn:hover { border-color: var(--accent); color: var(--accent); }
+.shop-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.shop-item:last-child { border-bottom: none; }
+.shop-item.checked { opacity: 0.4; }
+.shop-item.checked .shop-text { text-decoration: line-through; }
+.shop-check { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--border); background: transparent; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #fff; }
+.shop-check.done { background: var(--green); border-color: var(--green); }
+.shop-text { flex: 1; font-size: 14px; }
+.shop-tag { font-size: 11px; color: var(--muted); background: var(--surface); border-radius: 4px; padding: 2px 6px; }
+.icon-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 18px; padding: 0 4px; }
+.clear-btn { font-size: 12px; color: var(--muted); background: none; border: none; cursor: pointer; font-family: inherit; margin-top: 8px; }
+.week-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 6px; margin-bottom: 14px; }
+@media(max-width:560px){ .week-grid { grid-template-columns: repeat(4,1fr); } }
+.day-cell { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 8px 4px; text-align: center; cursor: pointer; }
+.day-cell.today { border-color: var(--accent2); }
+.day-cell.selected { background: var(--accent); border-color: var(--accent); }
+.day-name { font-size: 10px; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; }
+.day-cell.selected .day-name { color: rgba(255,255,255,0.7); }
+.day-meal { font-size: 11px; font-weight: 600; line-height: 1.3; min-height: 14px; }
+.meal-row { display: flex; gap: 8px; margin-bottom: 14px; }
+.meal-row input { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; font-size: 14px; color: var(--text); font-family: inherit; outline: none; }
+.meal-row input:focus { border-color: var(--accent); }
+.meal-row button { background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 9px 16px; cursor: pointer; font-family: inherit; font-weight: 600; }
+.recipe-item { background: var(--surface); border-radius: 10px; padding: 14px; margin-bottom: 8px; }
+.recipe-name { font-weight: 600; font-size: 14px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.recipe-desc { font-size: 13px; color: var(--muted); line-height: 1.5; white-space: pre-wrap; }
+.add-form { display: flex; flex-direction: column; gap: 8px; }
+.add-form input, .add-form textarea, .add-form select { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; font-size: 14px; color: var(--text); font-family: inherit; outline: none; }
+.add-form input:focus, .add-form textarea:focus { border-color: var(--accent); }
+.add-form textarea { resize: vertical; min-height: 60px; }
+.add-form button { align-self: flex-start; background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 9px 20px; cursor: pointer; font-weight: 600; font-family: inherit; }
+.putz-item { display: flex; align-items: center; gap: 10px; padding: 11px 0; border-bottom: 1px solid var(--border); }
+.putz-item:last-child { border-bottom: none; }
+.putz-check { width: 24px; height: 24px; border-radius: 6px; border: 2px solid var(--border); background: transparent; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; color: #fff; }
+.putz-check.done { background: var(--green); border-color: var(--green); }
+.putz-text { flex: 1; font-size: 14px; }
+.putz-text.done { text-decoration: line-through; color: var(--muted); }
+.putz-who { font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 600; flex-shrink: 0; }
+.putz-who.silas { background: rgba(59,130,246,0.2); color: var(--accent); }
+.putz-who.partner { background: rgba(236,72,153,0.2); color: var(--pink); }
+.putz-who.beide { background: rgba(16,185,129,0.2); color: var(--green); }
+.putz-freq { font-size: 11px; color: var(--muted); flex-shrink: 0; }
+.add-putz { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.add-putz input { flex: 1; min-width: 140px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-size: 13px; color: var(--text); font-family: inherit; outline: none; }
+.add-putz input:focus { border-color: var(--accent); }
+.add-putz select { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 13px; color: var(--text); font-family: inherit; outline: none; }
+.note-item { background: var(--surface); border-radius: 10px; padding: 14px; margin-bottom: 8px; position: relative; border-left: 3px solid var(--accent); }
+.note-author { font-size: 11px; color: var(--accent); margin-bottom: 6px; font-weight: 600; }
+.note-text { font-size: 14px; line-height: 1.6; white-space: pre-wrap; }
+.empty { text-align: center; color: var(--muted); padding: 24px 0; font-size: 13px; }
+.slabel { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin: 14px 0 8px; font-weight: 600; }
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 10px 20px; border-radius: 20px; font-size: 13px; display: none; z-index: 999; white-space: nowrap; }
+.toast.show { display: block; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-title">HOME</div>
+  <div class="sync-dot" id="syncDot"></div>
+</div>
+
+<div class="nav" id="mainNav">
+  <button class="nav-tab active" data-section="katzen">🐱 Katzen</button>
+  <button class="nav-tab" data-section="einkauf">🛒 Einkauf</button>
+  <button class="nav-tab" data-section="essen">🍽️ Essen</button>
+  <button class="nav-tab" data-section="putzen">🧹 Putzen</button>
+  <button class="nav-tab" data-section="notizen">📌 Notizen</button>
+</div>
+
+<div class="content">
+  <div class="section active" id="section-katzen">
+    <div class="card">
+      <div class="card-title">🐱 Onni & Archie – heute</div>
+      <div class="cat-grid" id="catGrid"></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:10px">Resettet automatisch jeden Tag um Mitternacht</div>
+    </div>
+    <div class="card">
+      <div class="card-title">📦 Futterstand</div>
+      <div id="futterList"></div>
+    </div>
+  </div>
+
+  <div class="section" id="section-einkauf">
+    <div class="card">
+      <div class="card-title">🛒 Einkaufsliste</div>
+      <div class="shop-tabs" id="shopTabs">
+        <button class="shop-tab active" data-tab="gemeinsam">Gemeinsam</button>
+        <button class="shop-tab" data-tab="silas">Silas</button>
+        <button class="shop-tab" data-tab="partner">Partner</button>
+      </div>
+      <div class="add-row">
+        <input type="text" id="shopInput" placeholder="Item hinzufügen...">
+        <select id="shopCat">
+          <option value="">Kategorie</option>
+          <option>🥩 Fleisch/Fisch</option>
+          <option>🥦 Gemüse</option>
+          <option>🍎 Obst</option>
+          <option>🥛 Milchprodukte</option>
+          <option>🍞 Brot</option>
+          <option>🧹 Haushalt</option>
+          <option>🐱 Katze</option>
+          <option>🧴 Pflege</option>
+          <option>🍫 Snacks</option>
+        </select>
+        <button class="add-btn" id="shopAddBtn">+</button>
+      </div>
+      <div class="slabel">Favoriten</div>
+      <div class="favorites" id="favoritesList"></div>
+      <div id="shopList"></div>
+      <button class="clear-btn" id="clearDoneBtn">✓ Erledigte löschen</button>
+    </div>
+  </div>
+
+  <div class="section" id="section-essen">
+    <div class="card">
+      <div class="card-title">📅 Wochenplan</div>
+      <div class="week-grid" id="weekGrid"></div>
+      <div class="meal-row">
+        <input type="text" id="mealInput" placeholder="Was gibt's?">
+        <button id="mealSaveBtn">Eintragen</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">📖 Rezepte</div>
+      <div id="recipeList"></div>
+      <div class="slabel" style="margin-top:16px">Rezept hinzufügen</div>
+      <div class="add-form">
+        <input type="text" id="recipeName" placeholder="Rezeptname">
+        <textarea id="recipeDesc" placeholder="Zutaten, Beschreibung, Link..."></textarea>
+        <button id="recipeAddBtn">Speichern</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="section-putzen">
+    <div class="card">
+      <div class="card-title">🧹 Putzplan</div>
+      <div id="putzList"></div>
+      <div class="add-putz">
+        <input type="text" id="putzInput" placeholder="Aufgabe...">
+        <select id="putzWho">
+          <option value="beide">Beide</option>
+          <option value="silas">Silas</option>
+          <option value="partner">Partner</option>
+        </select>
+        <select id="putzFreq">
+          <option value="täglich">Täglich</option>
+          <option value="wöchentlich">Wöchentlich</option>
+          <option value="monatlich">Monatlich</option>
+        </select>
+        <button class="add-btn" id="putzAddBtn">+</button>
+      </div>
+      <button class="clear-btn" id="resetPutzBtn">↺ Alle zurücksetzen</button>
+    </div>
+  </div>
+
+  <div class="section" id="section-notizen">
+    <div class="card">
+      <div class="card-title">📌 Pinnwand</div>
+      <div id="notesList"></div>
+      <div class="slabel" style="margin-top:16px">Neue Notiz</div>
+      <div class="add-form">
+        <input type="text" id="noteAuthor" placeholder="Dein Name (z.B. Silas)">
+        <textarea id="noteText" placeholder="Notiz, Erinnerung, Info..."></textarea>
+        <button id="noteAddBtn">Pinnen</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase Compat SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<script>
+// ── FIREBASE ──────────────────────────────────
+firebase.initializeApp({
+  apiKey: "AIzaSyAeND3421qmDF_Z95QdlbSvTlhnBFHRtM4",
+  authDomain: "home-8498e.firebaseapp.com",
+  projectId: "home-8498e",
+  storageBucket: "home-8498e.firebasestorage.app",
+  messagingSenderId: "809082245503",
+  appId: "1:809082245503:web:c06ae06534cadeaf0eca4a"
+});
+var db = firebase.firestore();
+var ref = db.collection('home').doc('haushalt');
+
+// ── STATE ─────────────────────────────────────
+var data = {
+  katzen: {
+    onni:   { futter: false, klo: false, date: '' },
+    archie: { futter: false, klo: false, date: '' }
+  },
+  futter: [
+    { name: 'Trockenfutter Onni',   pct: 80 },
+    { name: 'Trockenfutter Archie', pct: 80 },
+    { name: 'Nassfutter',           pct: 60 },
+    { name: 'Snacks',               pct: 50 }
+  ],
+  shop: { gemeinsam: [], silas: [], partner: [] },
+  favorites: ['Milch', 'Brot', 'Katzenfutter', 'Eier', 'Butter', 'Joghurt'],
+  weekplan: { Mo:'', Di:'', Mi:'', Do:'', Fr:'', Sa:'', So:'' },
+  recipes: [],
+  putz: [],
+  notes: []
+};
+
+var shopTab = 'gemeinsam';
+var selectedDay = null;
+var saveTimer = null;
+
+function setSyncing(v) {
+  document.getElementById('syncDot').className = 'sync-dot' + (v ? ' syncing' : '');
+}
+
+function scheduleSave() {
+  setSyncing(true);
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(function() {
+    ref.set(data).then(function(){ setSyncing(false); }).catch(function(e){ showToast('Fehler: '+e.message); setSyncing(false); });
+  }, 800);
+}
+
+ref.onSnapshot(function(snap) {
+  if (snap.exists) {
+    var d = snap.data();
+    if (d.katzen)    data.katzen    = d.katzen;
+    if (d.futter)    data.futter    = d.futter;
+    if (d.shop)      data.shop      = d.shop;
+    if (d.favorites) data.favorites = d.favorites;
+    if (d.weekplan)  data.weekplan  = d.weekplan;
+    if (d.recipes)   data.recipes   = d.recipes;
+    if (d.putz)      data.putz      = d.putz;
+    if (d.notes)     data.notes     = d.notes;
+  }
+  checkDailyReset();
+  renderAll();
+  setSyncing(false);
+});
+
+// ── DAILY RESET ───────────────────────────────
+function checkDailyReset() {
+  var today = new Date().toDateString();
+  ['onni','archie'].forEach(function(cat) {
+    if (data.katzen[cat].date !== today) {
+      data.katzen[cat].futter = false;
+      data.katzen[cat].klo    = false;
+      data.katzen[cat].date   = today;
+      scheduleSave();
+    }
+  });
+}
+
+// ── NAV ───────────────────────────────────────
+document.getElementById('mainNav').addEventListener('click', function(e) {
+  var btn = e.target.closest('.nav-tab');
+  if (!btn) return;
+  var section = btn.dataset.section;
+  document.querySelectorAll('.nav-tab').forEach(function(t){ t.classList.remove('active'); });
+  document.querySelectorAll('.section').forEach(function(s){ s.classList.remove('active'); });
+  btn.classList.add('active');
+  document.getElementById('section-'+section).classList.add('active');
+});
+
+document.getElementById('shopTabs').addEventListener('click', function(e) {
+  var btn = e.target.closest('.shop-tab');
+  if (!btn) return;
+  shopTab = btn.dataset.tab;
+  document.querySelectorAll('.shop-tab').forEach(function(t){ t.classList.remove('active'); });
+  btn.classList.add('active');
+  renderShop();
+});
+
+// ── RENDER ALL ────────────────────────────────
+function renderAll() {
+  renderKatzen();
+  renderFutter();
+  renderShop();
+  renderWeek();
+  renderRecipes();
+  renderPutz();
+  renderNotes();
+}
+
+// ── KATZEN ────────────────────────────────────
+function renderKatzen() {
+  var el = document.getElementById('catGrid'); el.innerHTML = '';
+  [{key:'onni',name:'🐱 Onni'},{key:'archie',name:'🐾 Archie'}].forEach(function(cat) {
+    var d = data.katzen[cat.key];
+    var card = document.createElement('div'); card.className = 'cat-card';
+    card.innerHTML = '<div class="cat-name">'+cat.name+'</div>';
+    [{key:'futter',label:'🍽️ Gefüttert'},{key:'klo',label:'🚽 Klo sauber'}].forEach(function(task) {
+      var row = document.createElement('div'); row.className = 'cat-task';
+      var lbl = document.createElement('span'); lbl.className = 'cat-task-label'; lbl.textContent = task.label;
+      var btn = document.createElement('button');
+      btn.className = 'cat-check' + (d[task.key] ? ' done' : '');
+      btn.innerHTML = d[task.key] ? '✓' : '';
+      btn.addEventListener('click', (function(c,t){ return function(){
+        data.katzen[c][t] = !data.katzen[c][t];
+        scheduleSave(); renderKatzen();
+      };})(cat.key, task.key));
+      row.appendChild(lbl); row.appendChild(btn); card.appendChild(row);
+    });
+    var dateEl = document.createElement('div'); dateEl.className = 'cat-date';
+    dateEl.textContent = new Date().toLocaleDateString('de-DE', {weekday:'long', day:'2-digit', month:'2-digit'});
+    card.appendChild(dateEl);
+    el.appendChild(card);
+  });
+}
+
+// ── FUTTER ────────────────────────────────────
+function renderFutter() {
+  var el = document.getElementById('futterList'); el.innerHTML = '';
+  data.futter.forEach(function(item, i) {
+    var pct = item.pct;
+    var color = pct > 50 ? 'var(--green)' : pct > 20 ? 'var(--accent2)' : 'var(--red)';
+    var row = document.createElement('div'); row.className = 'futter-item';
+    var lbl = document.createElement('span'); lbl.className = 'futter-label'; lbl.textContent = item.name;
+    var barWrap = document.createElement('div'); barWrap.className = 'futter-bar-wrap';
+    var bar = document.createElement('div'); bar.className = 'futter-bar';
+    bar.style.width = pct+'%'; bar.style.background = color;
+    barWrap.appendChild(bar);
+    var pctEl = document.createElement('span'); pctEl.className = 'futter-pct'; pctEl.style.color = color; pctEl.textContent = pct+'%';
+    var btns = document.createElement('div'); btns.className = 'futter-btns';
+    [{d:-25,t:'−'},{d:25,t:'+'}].forEach(function(b) {
+      var btn = document.createElement('button'); btn.className = 'futter-btn'; btn.textContent = b.t;
+      btn.addEventListener('click', (function(idx, delta){ return function(){
+        data.futter[idx].pct = Math.max(0, Math.min(100, data.futter[idx].pct + delta));
+        scheduleSave(); renderFutter();
+      };})(i, b.d));
+      btns.appendChild(btn);
+    });
+    row.appendChild(lbl); row.appendChild(barWrap); row.appendChild(pctEl); row.appendChild(btns);
+    el.appendChild(row);
+  });
+}
+
+// ── EINKAUF ───────────────────────────────────
+document.getElementById('shopAddBtn').addEventListener('click', function() {
+  var inp = document.getElementById('shopInput');
+  var cat = document.getElementById('shopCat');
+  var text = inp.value.trim(); if (!text) return;
+  if (!data.shop[shopTab]) data.shop[shopTab] = [];
+  data.shop[shopTab].push({id:Date.now(), text:text, cat:cat.value, done:false});
+  inp.value=''; cat.value='';
+  scheduleSave(); renderShop();
+});
+document.getElementById('shopInput').addEventListener('keydown', function(e){
+  if(e.key==='Enter') document.getElementById('shopAddBtn').click();
+});
+document.getElementById('clearDoneBtn').addEventListener('click', function() {
+  data.shop[shopTab] = (data.shop[shopTab]||[]).filter(function(i){ return !i.done; });
+  scheduleSave(); renderShop();
+});
+
+function renderShop() {
+  var favEl = document.getElementById('favoritesList'); favEl.innerHTML = '';
+  data.favorites.forEach(function(fav) {
+    var btn = document.createElement('button'); btn.className = 'fav-btn'; btn.textContent = fav;
+    btn.addEventListener('click', function(){
+      if (!data.shop[shopTab]) data.shop[shopTab] = [];
+      data.shop[shopTab].push({id:Date.now(), text:fav, cat:'', done:false});
+      scheduleSave(); renderShop();
+    });
+    favEl.appendChild(btn);
+  });
+
+  var el = document.getElementById('shopList'); el.innerHTML = '';
+  var items = data.shop[shopTab] || [];
+  if (!items.length) { el.innerHTML='<div class="empty">Liste ist leer</div>'; return; }
+  var open = items.filter(function(i){ return !i.done; });
+  var done = items.filter(function(i){ return i.done; });
+  open.concat(done).forEach(function(item) {
+    var realIdx = items.indexOf(item);
+    var row = document.createElement('div'); row.className = 'shop-item'+(item.done?' checked':'');
+    var cb = document.createElement('button'); cb.className='shop-check'+(item.done?' done':''); cb.innerHTML=item.done?'✓':'';
+    cb.addEventListener('click', (function(i){ return function(){
+      data.shop[shopTab][i].done = !data.shop[shopTab][i].done;
+      scheduleSave(); renderShop();
+    };})(realIdx));
+    var txt = document.createElement('span'); txt.className='shop-text'; txt.textContent=item.text;
+    var del = document.createElement('button'); del.className='icon-btn'; del.innerHTML='&times;';
+    del.addEventListener('click', (function(i){ return function(){
+      data.shop[shopTab].splice(i,1); scheduleSave(); renderShop();
+    };})(realIdx));
+    row.appendChild(cb); row.appendChild(txt);
+    if (item.cat) { var tag=document.createElement('span'); tag.className='shop-tag'; tag.textContent=item.cat; row.appendChild(tag); }
+    row.appendChild(del); el.appendChild(row);
+  });
+}
+
+// ── WOCHENPLAN ────────────────────────────────
+var DAYS = ['Mo','Di','Mi','Do','Fr','Sa','So'];
+var DAYS_FULL = ['Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag','Sonntag'];
+function getTodayKey() { var d=new Date().getDay(); return DAYS[d===0?6:d-1]; }
+
+document.getElementById('mealSaveBtn').addEventListener('click', function() {
+  if (!selectedDay) return;
+  data.weekplan[selectedDay] = document.getElementById('mealInput').value.trim();
+  scheduleSave(); renderWeek();
+});
+
+function renderWeek() {
+  var el = document.getElementById('weekGrid'); el.innerHTML='';
+  var todayKey = getTodayKey();
+  if (!selectedDay) selectedDay = todayKey;
+  DAYS.forEach(function(day) {
+    var cell = document.createElement('div');
+    cell.className = 'day-cell'+(day===todayKey?' today':'')+(day===selectedDay?' selected':'');
+    cell.innerHTML = '<div class="day-name">'+day+'</div><div class="day-meal">'+(data.weekplan[day]||'–')+'</div>';
+    cell.addEventListener('click', (function(d){ return function(){
+      selectedDay=d;
+      document.getElementById('mealInput').value = data.weekplan[d]||'';
+      document.getElementById('mealInput').placeholder = 'Was gibt\'s '+DAYS_FULL[DAYS.indexOf(d)]+'?';
+      renderWeek();
+    };})(day));
+    el.appendChild(cell);
+  });
+}
+
+// ── REZEPTE ───────────────────────────────────
+document.getElementById('recipeAddBtn').addEventListener('click', function() {
+  var name = document.getElementById('recipeName').value.trim(); if(!name) return;
+  var desc = document.getElementById('recipeDesc').value.trim();
+  data.recipes.push({id:Date.now(), name:name, desc:desc});
+  document.getElementById('recipeName').value='';
+  document.getElementById('recipeDesc').value='';
+  scheduleSave(); renderRecipes();
+});
+
+function renderRecipes() {
+  var el = document.getElementById('recipeList'); el.innerHTML='';
+  if (!data.recipes.length) { el.innerHTML='<div class="empty">Noch keine Rezepte</div>'; return; }
+  data.recipes.forEach(function(r, i) {
+    var div = document.createElement('div'); div.className='recipe-item';
+    var nameRow = document.createElement('div'); nameRow.className='recipe-name';
+    var nameSpan = document.createElement('span'); nameSpan.textContent=r.name;
+    var del = document.createElement('button'); del.className='icon-btn'; del.innerHTML='&times;';
+    del.addEventListener('click', (function(idx){ return function(){ data.recipes.splice(idx,1); scheduleSave(); renderRecipes(); };})(i));
+    nameRow.appendChild(nameSpan); nameRow.appendChild(del);
+    div.appendChild(nameRow);
+    if (r.desc) { var desc=document.createElement('div'); desc.className='recipe-desc'; desc.textContent=r.desc; div.appendChild(desc); }
+    el.appendChild(div);
+  });
+}
+
+// ── PUTZEN ────────────────────────────────────
+document.getElementById('putzAddBtn').addEventListener('click', function() {
+  var text = document.getElementById('putzInput').value.trim(); if(!text) return;
+  var who  = document.getElementById('putzWho').value;
+  var freq = document.getElementById('putzFreq').value;
+  data.putz.push({id:Date.now(), text:text, who:who, freq:freq, done:false});
+  document.getElementById('putzInput').value='';
+  scheduleSave(); renderPutz();
+});
+document.getElementById('putzInput').addEventListener('keydown', function(e){
+  if(e.key==='Enter') document.getElementById('putzAddBtn').click();
+});
+document.getElementById('resetPutzBtn').addEventListener('click', function() {
+  data.putz.forEach(function(t){ t.done=false; });
+  scheduleSave(); renderPutz();
+});
+
+function renderPutz() {
+  var el = document.getElementById('putzList'); el.innerHTML='';
+  if (!data.putz.length) { el.innerHTML='<div class="empty">Noch keine Aufgaben</div>'; return; }
+  var open = data.putz.filter(function(t){ return !t.done; });
+  var done = data.putz.filter(function(t){ return t.done; });
+  open.concat(done).forEach(function(task) {
+    var i = data.putz.indexOf(task);
+    var row = document.createElement('div'); row.className='putz-item';
+    var cb = document.createElement('button'); cb.className='putz-check'+(task.done?' done':''); cb.innerHTML=task.done?'✓':'';
+    cb.addEventListener('click', (function(idx){ return function(){ data.putz[idx].done=!data.putz[idx].done; scheduleSave(); renderPutz(); };})(i));
+    var txt = document.createElement('span'); txt.className='putz-text'+(task.done?' done':''); txt.textContent=task.text;
+    var who = document.createElement('span'); who.className='putz-who '+task.who;
+    who.textContent = task.who==='beide'?'Beide':task.who==='silas'?'Silas':'Partner';
+    var freq = document.createElement('span'); freq.className='putz-freq'; freq.textContent=task.freq;
+    var del = document.createElement('button'); del.className='icon-btn'; del.innerHTML='&times;';
+    del.addEventListener('click', (function(idx){ return function(){ data.putz.splice(idx,1); scheduleSave(); renderPutz(); };})(i));
+    row.appendChild(cb); row.appendChild(txt); row.appendChild(who); row.appendChild(freq); row.appendChild(del);
+    el.appendChild(row);
+  });
+}
+
+// ── NOTIZEN ───────────────────────────────────
+document.getElementById('noteAddBtn').addEventListener('click', function() {
+  var author = document.getElementById('noteAuthor').value.trim() || 'Anonym';
+  var text   = document.getElementById('noteText').value.trim(); if(!text) return;
+  data.notes.unshift({id:Date.now(), author:author, text:text});
+  document.getElementById('noteText').value='';
+  scheduleSave(); renderNotes();
+});
+
+function renderNotes() {
+  var el = document.getElementById('notesList'); el.innerHTML='';
+  if (!data.notes.length) { el.innerHTML='<div class="empty">Noch keine Notizen</div>'; return; }
+  data.notes.forEach(function(note, i) {
+    var div = document.createElement('div'); div.className='note-item';
+    var auth = document.createElement('div'); auth.className='note-author'; auth.textContent=note.author;
+    var txt  = document.createElement('div'); txt.className='note-text'; txt.textContent=note.text;
+    var del  = document.createElement('button'); del.className='icon-btn'; del.style.cssText='position:absolute;top:10px;right:12px;'; del.innerHTML='&times;';
+    del.addEventListener('click', (function(idx){ return function(){ data.notes.splice(idx,1); scheduleSave(); renderNotes(); };})(i));
+    div.style.position='relative';
+    div.appendChild(auth); div.appendChild(txt); div.appendChild(del);
+    el.appendChild(div);
+  });
+}
+
+function showToast(msg) {
+  var t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); },2200);
+}
+</script>
+</body>
+</html>
