@@ -34,7 +34,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cat-task-label { font-size: 15px; }
 .cat-check { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--border); background: transparent; cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
 .cat-check.done { background: var(--green); border-color: var(--green); }
-.cat-date { font-size: 11px; color: var(--muted); margin-top: 10px; }
+.cat-date { font-size: 15px; font-weight: 700; color: var(--text); margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); }
 
 /* Futter */
 .futter-item { display: flex; align-items: center; gap: 10px; padding: 11px 0; border-bottom: 1px solid var(--border); }
@@ -42,6 +42,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .futter-label { flex: 1; font-size: 14px; }
 .futter-count { font-size: 20px; font-weight: 700; min-width: 28px; text-align: right; }
 .futter-unit { font-size: 12px; color: var(--muted); min-width: 62px; }
+.futter-fuellstand-row { display: flex; align-items: center; gap: 10px; padding: 6px 0 10px; border-bottom: 1px solid var(--border); }
+.futter-fuellstand-label { font-size: 12px; color: var(--muted); min-width: 82px; padding-left: 2px; }
+.futter-bar-wrap { flex: 1; background: var(--border); border-radius: 4px; height: 7px; overflow: hidden; }
+.futter-bar { height: 100%; border-radius: 4px; transition: width 0.3s; }
+.futter-pct { font-size: 12px; font-weight: 700; min-width: 36px; text-align: right; }
+.futter-fuellstand-row .futter-btns .futter-btn { padding: 3px 10px; font-size: 14px; }
 .futter-btns { display: flex; gap: 4px; }
 .futter-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 5px 13px; font-size: 16px; cursor: pointer; color: var(--text); font-family: inherit; }
 
@@ -270,7 +276,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <div id="notesList"></div>
       <div class="slabel" style="margin-top:16px">Neue Notiz</div>
       <div class="add-form">
-        <input type="text" id="noteAuthor" placeholder="Dein Name">
+        <input type="text" id="noteAuthor" placeholder="Name">
         <textarea id="noteText" placeholder="Notiz, Erinnerung, Info..."></textarea>
         <button id="noteAddBtn">Pinnen</button>
       </div>
@@ -312,7 +318,7 @@ function emptyWeekplan() {
 var data = {
   katzen:    { futter: false, klo: false, date: '' },
   futter:    [
-    { name: 'Trockenfutter', packungen: 3 },
+    { name: 'Trockenfutter', packungen: 3, fuellstand: 70 },
     { name: 'Nassfutter',    packungen: 5 },
     { name: 'Snacks',        packungen: 2 }
   ],
@@ -368,7 +374,9 @@ function migrateData(d) {
         var name = f.name.replace(' Onni', '').replace(' Archie', '');
         if (!seen[name]) {
           seen[name] = true;
-          migrated.push({ name: name, packungen: Math.max(1, Math.round(f.pct / 25)) });
+          var entry = { name: name, packungen: Math.max(1, Math.round(f.pct / 25)) };
+          if (name === 'Trockenfutter') entry.fuellstand = 70;
+          migrated.push(entry);
         }
       });
       data.futter = migrated;
@@ -519,6 +527,44 @@ function renderFutter() {
     row.appendChild(unit);
     row.appendChild(btns);
     el.appendChild(row);
+
+    if (item.fuellstand !== undefined) {
+      var f      = item.fuellstand;
+      var fcolor = f > 50 ? 'var(--green)' : f > 20 ? 'var(--accent2)' : 'var(--red)';
+      var frow   = document.createElement('div');
+      frow.className = 'futter-fuellstand-row';
+
+      var flbl = document.createElement('span');
+      flbl.className   = 'futter-fuellstand-label';
+      flbl.textContent = 'Füllstand';
+
+      var barWrap = document.createElement('div'); barWrap.className = 'futter-bar-wrap';
+      var bar     = document.createElement('div'); bar.className = 'futter-bar';
+      bar.style.width      = f + '%';
+      bar.style.background = fcolor;
+      barWrap.appendChild(bar);
+
+      var pctEl = document.createElement('span');
+      pctEl.className   = 'futter-pct';
+      pctEl.style.color = fcolor;
+      pctEl.textContent = f + '%';
+
+      var fbtns = document.createElement('div'); fbtns.className = 'futter-btns';
+      [{ d: -10, t: '−' }, { d: 10, t: '+' }].forEach(function(b) {
+        var btn = document.createElement('button'); btn.className = 'futter-btn'; btn.textContent = b.t;
+        btn.addEventListener('click', (function(idx, delta) { return function() {
+          data.futter[idx].fuellstand = Math.max(0, Math.min(100, (data.futter[idx].fuellstand || 0) + delta));
+          scheduleSave(); renderFutter();
+        }; })(i, b.d));
+        fbtns.appendChild(btn);
+      });
+
+      frow.appendChild(flbl);
+      frow.appendChild(barWrap);
+      frow.appendChild(pctEl);
+      frow.appendChild(fbtns);
+      el.appendChild(frow);
+    }
   });
 }
 
